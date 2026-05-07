@@ -1,0 +1,91 @@
+/* Color tokens & typography. Theme is applied via [data-theme] on <body>. */
+
+:root {
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 18px 40px rgba(0, 0, 0, 0.18);
+
+  --transition-fast: 120ms ease;
+  --transition-med: 200ms ease;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 48px;
+}
+
+/* Dark theme — primary */
+body[data-theme="dark"] {
+  --bg:           #0b0d12;
+  --bg-elev-1:    #11141b;
+  --bg-elev-2:    #161a23;
+  --bg-elev-3:    #1d2230;
+  --bg-input:     #0e1118;
+
+  --border:       #232838;
+  --border-strong:#2e3548;
+
+  --text:         #e9ecf3;
+  --text-muted:   #a3a9b8;
+  --text-dim:     #6f7689;
+
+  --accent:       #7c5cff;       /* primary indigo */
+  --accent-2:     #00d4b1;       /* mint accent */
+  --accent-soft:  rgba(124, 92, 255, 0.18);
+  --accent-ring:  rgba(124, 92, 255, 0.35);
+
+  --success:      #2dd4bf;
+  --warn:         #f59e0b;
+  --danger:       #ef4444;
+
+  --code-bg:      #0a0d14;
+  --code-line:    #21283b;
+  --code-string:  #a5e07e;
+  --code-keyword: #c084fc;
+  --code-type:    #7dd3fc;
+  --code-comment: #6f7689;
+  --code-num:     #fbbf24;
+}
+
+body[data-theme="light"] {
+  --bg:           #f6f7fb;
+  --bg-elev-1:    #ffffff;
+  --bg-elev-2:    #f1f3f9;
+  --bg-elev-3:    #e6e9f2;
+  --bg-input:     #ffffff;
+
+  --border:       #e2e5ee;
+  --border-strong:#cdd2e0;
+
+  --text:         #1c1f2a;
+  --text-muted:   #5a6072;
+  --text-dim:     #8b91a3;
+
+  --accent:       #5b3df3;
+  --accent-2:     #00b89a;
+  --accent-soft:  rgba(91, 61, 243, 0.10);
+  --accent-ring:  rgba(91, 61, 243, 0.25);
+
+  --success:      #0f9b86;
+  --warn:         #b76d00;
+  --danger:       #c5302c;
+
+  --code-bg:      #f9fafd;
+  --code-line:    #e8ebf3;
+  --code-string:  #237a3a;
+  --code-keyword: #6f29c2;
+  --code-type:    #1672a6;
+  --code-comment: #8b91a3;
+  --code-num:     #b16500;
+}

@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>JSON → Dart · Advanced</title>
+    <meta
+      name="description"
+      content="Convert JSON to clean, opinionated Dart model classes. API/Param naming, ConvertService, parseItem/copyItem helpers, project workspaces."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles/theme.css" />
+    <link rel="stylesheet" href="styles/main.css" />
+    <link rel="stylesheet" href="styles/components.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  </head>
+  <body data-theme="dark">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand__logo" aria-hidden="true">{ }</div>
+        <div class="brand__text">
+          <h1>JSON → Dart</h1>
+          <span class="brand__sub">Advanced model generator</span>
+        </div>
+      </div>
+      <nav class="tabs" role="tablist">
+        <button class="tab is-active" data-tab="generator" role="tab">Generator</button>
+        <button class="tab" data-tab="projects" role="tab">Projects</button>
+        <button class="tab" data-tab="docs" role="tab">Docs &amp; Help</button>
+      </nav>
+      <div class="topbar__right">
+        <button class="icon-btn" id="themeToggle" title="Toggle theme" aria-label="Toggle theme">
+          <span class="theme-icon"></span>
+        </button>
+        <a
+          class="ghost-btn"
+          id="githubLink"
+          href="#"
+          target="_blank"
+          rel="noopener"
+          title="View on GitHub"
+        >
+          GitHub
+        </a>
+      </div>
+    </header>
+
+    <main>
+      <!-- ============== GENERATOR ============== -->
+      <section class="panel" id="panel-generator" data-panel="generator" aria-hidden="false">
+        <aside class="sidebar">
+          <div class="card">
+            <h3>1. Naming</h3>
+            <p class="hint">
+              Pick how the root class is named.
+              <strong>API</strong> for response models (<code>ApiHomeModel</code>),
+              <strong>Param</strong> for request payloads (<code>PmLoginModel</code>).
+            </p>
+            <div class="seg">
+              <label class="seg__opt">
+                <input type="radio" name="mode" value="api" checked />
+                <span>API model</span>
+              </label>
+              <label class="seg__opt">
+                <input type="radio" name="mode" value="param" />
+                <span>Param model</span>
+              </label>
+            </div>
+
+            <label class="field">
+              <span>Root name</span>
+              <input id="rootKey" type="text" value="home" placeholder="e.g. home / login" />
+              <small class="hint--inline" id="rootPreview"></small>
+            </label>
+
+            <label class="field">
+              <span>Package name (optional)</span>
+              <input id="packageName" type="text" placeholder="e.g. my_app" />
+              <small class="hint--inline">
+                Used in <code>package:&lt;name&gt;/...</code> imports. Leave blank for relative imports.
+              </small>
+            </label>
+          </div>
+
+          <div class="card">
+            <h3>2. Helpers</h3>
+
+            <label class="check">
+              <input type="checkbox" id="optConvertService" />
+              <span>
+                Use <code>ConvertService</code> in <code>fromJson</code>
+                <small>Defensive type-coercion (recommended for messy APIs).</small>
+              </span>
+            </label>
+
+            <label class="check" id="optNullSafeWrap">
+              <input type="checkbox" id="optNullSafeToJson" />
+              <span>
+                Wrap each <code>toJson</code> field in a null check
+                <small>Auto-enabled for <em>Param</em> mode. Skips fields that are null.</small>
+              </span>
+            </label>
+          </div>
+
+          <div class="card">
+            <h3>3. Capabilities</h3>
+            <p class="hint">Static helpers added inside every generated class.</p>
+
+            <label class="check">
+              <input type="checkbox" id="capParseItem" checked />
+              <span>
+                <code>parseItem(json)</code>
+                <small>Parses a single object safely.</small>
+              </span>
+            </label>
+            <label class="check">
+              <input type="checkbox" id="capParseItems" checked />
+              <span>
+                <code>parseItems(json)</code>
+                <small>Handles both <code>[..]</code> and <code>{ data: [..] }</code>.</small>
+              </span>
+            </label>
+            <label class="check">
+              <input type="checkbox" id="capCopyItem" />
+              <span>
+                <code>copyItem(source)</code>
+                <small>Deep copy via <code>fromJson(toJson())</code>.</small>
+              </span>
+            </label>
+            <label class="check">
+              <input type="checkbox" id="capCopyItems" />
+              <span>
+                <code>copyItems(list)</code>
+                <small>Deep-copies a list of objects.</small>
+              </span>
+            </label>
+            <label class="check">
+              <input type="checkbox" id="capToString" />
+              <span>
+                <code>toString()</code> override
+                <small>Friendly print: prefers <code>name</code>/<code>title</code>/<code>id</code>.</small>
+              </span>
+            </label>
+          </div>
+
+          <div class="card">
+            <h3>4. Save / Export</h3>
+            <div class="row">
+              <button class="btn btn--secondary" id="saveToProjectBtn">Save to Project</button>
+              <button class="btn btn--secondary" id="downloadDocBtn">Download docs</button>
+            </div>
+            <button class="btn btn--primary btn--block" id="downloadZipBtn">
+              Download .zip
+            </button>
+            <small class="hint">
+              ZIP includes the model folder structure
+              and (if enabled) a fresh <code>convert_service.dart</code> in <code>utils/</code>.
+            </small>
+          </div>
+        </aside>
+
+        <div class="workspace">
+          <div class="pane pane--input">
+            <div class="pane__head">
+              <h2>Paste JSON</h2>
+              <div class="pane__actions">
+                <button class="link-btn" id="loadSampleBtn">Load sample</button>
+                <button class="link-btn" id="clearInputBtn">Clear</button>
+                <button class="btn btn--primary" id="generateBtn">Generate ▸</button>
+              </div>
+            </div>
+            <textarea
+              id="jsonInput"
+              spellcheck="false"
+              placeholder='Paste an API response here, e.g.&#10;{&#10;  "id": 1,&#10;  "name": "Home",&#10;  "menu": [{ "title": "Profile" }]&#10;}'
+            ></textarea>
+            <div class="pane__foot" id="parseStatus" aria-live="polite"></div>
+          </div>
+
+          <div class="pane pane--output">
+            <div class="pane__head">
+              <h2>Generated Files</h2>
+              <div class="pane__actions">
+                <button class="link-btn" id="copyAllBtn" disabled>Copy active</button>
+              </div>
+            </div>
+            <div class="files-tabs" id="filesTabs" role="tablist"></div>
+            <pre class="code-output" id="codeOutput"><code id="codeOutputCode"></code></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============== PROJECTS ============== -->
+      <section class="panel" id="panel-projects" data-panel="projects" aria-hidden="true">
+        <div class="projects">
+          <div class="projects__sidebar">
+            <div class="projects__head">
+              <h2>Projects</h2>
+              <button class="btn btn--primary btn--small" id="newProjectBtn">+ New</button>
+            </div>
+            <ul class="projects__list" id="projectsList"></ul>
+          </div>
+          <div class="projects__detail" id="projectDetail">
+            <div class="empty-state">
+              <h3>No project selected</h3>
+              <p>
+                Create a project (e.g. <em>myFm</em>) and save generated models into it.
+                You can download the entire project — or just one feature — as a structured
+                ZIP, and export markdown docs for everything you've added.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============== DOCS / HELP ============== -->
+      <section class="panel" id="panel-docs" data-panel="docs" aria-hidden="true">
+        <div class="docs">
+          <article class="docs__content">
+            <h2>How this tool works</h2>
+            <p>
+              Paste a JSON response or request body, pick a naming convention, and the tool
+              produces idiomatic Dart classes that match the conventions used in real Flutter
+              codebases — including the maaden codebase that inspired this project.
+            </p>
+
+            <h3>Naming conventions</h3>
+            <ul>
+              <li>
+                <strong>API model</strong> — for HTTP responses. Root class is
+                <code>Api&lt;Name&gt;Model</code> in folder <code>api_&lt;name&gt;/</code>.
+              </li>
+              <li>
+                <strong>Param model</strong> — for request payloads. Root class is
+                <code>Pm&lt;Name&gt;Model</code> in folder <code>pm_&lt;name&gt;/</code>.
+              </li>
+              <li>
+                Sub-classes always end with <code>Model</code>. A nested object with its
+                <em>own</em> nested objects gets its own folder; otherwise it lives as a
+                file in the parent folder.
+              </li>
+            </ul>
+
+            <h3>Type inference rules</h3>
+            <ul>
+              <li><code>null</code> → <code>dynamic</code> (not <code>Null?</code>)</li>
+              <li>List of all-null / empty list → <code>List&lt;dynamic&gt;?</code></li>
+              <li>Mixed primitive list → <code>List&lt;dynamic&gt;?</code></li>
+              <li>Whole-number → <code>int?</code>; fractional → <code>double?</code></li>
+            </ul>
+
+            <h3>Param mode <code>toJson</code></h3>
+            <p>
+              In Param mode, every <code>toJson</code> assignment is wrapped in a
+              <code>if (field != null)</code> guard so the request body never sends keys
+              with <code>null</code> values.
+            </p>
+
+            <h3>ConvertService</h3>
+            <p>
+              Enable this option for defensive parsing. <code>fromJson</code> calls
+              <code>ConvertService.convertString(...)</code>, <code>.convertInt(...)</code>,
+              etc. instead of trusting raw JSON values. The matching
+              <code>convert_service.dart</code> is bundled into your downloaded ZIP under
+              <code>utils/</code>.
+            </p>
+
+            <h3>Capabilities</h3>
+            <p>Optional static helpers added to each class:</p>
+            <ul>
+              <li><code>parseItem</code> — parse a single object, never throws.</li>
+              <li>
+                <code>parseItems</code> — handles both raw lists
+                (<code>[{}, {}]</code>) and <code>{ data: [{}, {}] }</code>.
+              </li>
+              <li><code>copyItem</code> / <code>copyItems</code> — deep copy via JSON round-trip.</li>
+              <li><code>toString</code> override — prints <code>name</code>, <code>title</code>, <code>label</code>, or <code>id</code> if present.</li>
+            </ul>
+
+            <h3>Projects</h3>
+            <p>
+              Use the <strong>Projects</strong> tab to group models by app
+              (<em>myFm</em>, <em>maaden</em>, …). Save each generated set into a project,
+              then download the entire <code>lib/</code> tree at once. Projects live in
+              your browser's localStorage — no server, no signup.
+            </p>
+
+            <h3>Docs export</h3>
+            <p>
+              Every save remembers the original JSON you pasted. The
+              <strong>Download docs</strong> action emits a markdown bundle: one file per
+              model, listing the fields, types, sample JSON, and the generated Dart.
+              Useful for handing context to teammates or to AI assistants.
+            </p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <!-- ===== modal: new project ===== -->
+    <dialog class="modal" id="newProjectModal">
+      <form method="dialog" class="modal__body">
+        <h3>New project</h3>
+        <label class="field">
+          <span>Project name</span>
+          <input type="text" id="newProjectName" placeholder="e.g. myFm" required />
+        </label>
+        <label class="field">
+          <span>Description (optional)</span>
+          <textarea id="newProjectDesc" rows="2"></textarea>
+        </label>
+        <div class="row row--end">
+          <button type="button" class="btn btn--secondary" id="cancelNewProjectBtn">Cancel</button>
+          <button type="submit" class="btn btn--primary">Create</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- ===== modal: save to project ===== -->
+    <dialog class="modal" id="saveToProjectModal">
+      <form method="dialog" class="modal__body">
+        <h3>Save to project</h3>
+        <label class="field">
+          <span>Project</span>
+          <select id="saveTargetProject"></select>
+        </label>
+        <label class="field">
+          <span>Feature / module name</span>
+          <input type="text" id="saveFeatureName" placeholder="e.g. audit, profile" required />
+          <small class="hint--inline">
+            Models will be placed under <code>lib/features/&lt;feature&gt;/models/...</code>
+          </small>
+        </label>
+        <div class="row row--end">
+          <button type="button" class="btn btn--secondary" id="cancelSaveBtn">Cancel</button>
+          <button type="submit" class="btn btn--primary">Save</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>
