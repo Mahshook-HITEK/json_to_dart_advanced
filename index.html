@@ -230,81 +230,650 @@
       <!-- ============== DOCS / HELP ============== -->
       <section class="panel" id="panel-docs" data-panel="docs" aria-hidden="true">
         <div class="docs">
+          <aside class="docs__toc" aria-label="Table of contents">
+            <h4>On this page</h4>
+            <ul>
+              <li><a href="#doc-what">What is this?</a></li>
+              <li><a href="#doc-why">Why use it?</a></li>
+              <li><a href="#doc-example">Quick example</a></li>
+              <li><a href="#doc-howto">How to use it</a></li>
+              <li><a href="#doc-options">Every option, explained</a></li>
+              <li><a href="#doc-usecases">Use cases</a></li>
+              <li><a href="#doc-output">What you get out</a></li>
+              <li><a href="#doc-autofix">JSON auto-fix</a></li>
+              <li><a href="#doc-projects">Projects feature</a></li>
+              <li><a href="#doc-convertservice">ConvertService helper</a></li>
+              <li><a href="#doc-docsexport">Docs export</a></li>
+              <li><a href="#doc-faq">FAQ</a></li>
+              <li><a href="#doc-troubleshoot">Troubleshooting</a></li>
+            </ul>
+          </aside>
+
           <article class="docs__content">
-            <h2>How this tool works</h2>
-            <p>
-              Paste a JSON response or request body, pick a naming convention, and the tool
-              produces idiomatic Dart classes that match the conventions used in real Flutter
-              codebases.
+            <h1 class="docs__title">Docs &amp; Help</h1>
+            <p class="docs__lede">
+              Everything you need to know to get value out of this tool — from your first
+              paste to managing a multi-feature project. Skim the table of contents on
+              the left, or read top-to-bottom.
             </p>
 
-            <h3>Naming conventions</h3>
-            <ul>
-              <li>
-                <strong>API model</strong> — for HTTP responses. Root class is
-                <code>Api&lt;Name&gt;Model</code> in folder <code>api_&lt;name&gt;/</code>.
-              </li>
-              <li>
-                <strong>Param model</strong> — for request payloads. Root class is
-                <code>Pm&lt;Name&gt;Model</code> in folder <code>pm_&lt;name&gt;/</code>.
-              </li>
-              <li>
-                Sub-classes always end with <code>Model</code>. A nested object with its
-                <em>own</em> nested objects gets its own folder; otherwise it lives as a
-                file in the parent folder.
-              </li>
-            </ul>
-
-            <h3>Type inference rules</h3>
-            <ul>
-              <li><code>null</code> → <code>dynamic</code> (not <code>Null?</code>)</li>
-              <li>List of all-null / empty list → <code>List&lt;dynamic&gt;?</code></li>
-              <li>Mixed primitive list → <code>List&lt;dynamic&gt;?</code></li>
-              <li>Whole-number → <code>int?</code>; fractional → <code>double?</code></li>
-            </ul>
-
-            <h3>Param mode <code>toJson</code></h3>
+            <!-- ============== WHAT IS THIS ============== -->
+            <h2 id="doc-what">What is this?</h2>
             <p>
-              In Param mode, every <code>toJson</code> assignment is wrapped in a
-              <code>if (field != null)</code> guard so the request body never sends keys
-              with <code>null</code> values.
+              When you build a Flutter app that talks to a backend, the backend sends data
+              as <strong>JSON</strong>. To use that data in Dart you need a
+              <em>model class</em> — a Dart class that mirrors the JSON shape and knows how
+              to parse itself.
+            </p>
+            <p>
+              Writing those classes by hand is slow and error-prone, especially when
+              responses have nested objects and arrays. <strong>This tool reads any JSON
+              and writes the Dart class for you</strong> — and it does it the way an
+              experienced Flutter developer would.
+            </p>
+            <p>It doesn't just convert types. It also:</p>
+            <ul>
+              <li>Names classes and folders the way real Flutter teams structure their code.</li>
+              <li>Adds defensive parsing (so dirty server data doesn't crash your app).</li>
+              <li>Distinguishes <strong>response models</strong> (data you receive) from <strong>param models</strong> (data you send).</li>
+              <li>Bundles a helper utility so generated code works in any Flutter project with zero extra dependencies.</li>
+              <li>Lets you save multiple generated models into a "project" and download the whole thing as a ready-to-drop folder.</li>
+              <li>Auto-fixes incomplete JSON pastes (missing braces, trailing commas, JS-style comments).</li>
+            </ul>
+
+            <!-- ============== WHY USE IT ============== -->
+            <h2 id="doc-why">Why use it?</h2>
+            <p>
+              If you've used the original
+              <a href="https://javiercbk.github.io/json_to_dart/" target="_blank" rel="noopener">json_to_dart</a>
+              before, you may have run into these problems. This tool fixes them:
+            </p>
+            <table class="docs__table">
+              <thead>
+                <tr><th>Problem in the original</th><th>What this tool does</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>null</code> values become <code>Null?</code> (a useless type)</td>
+                  <td>They become <code>dynamic</code> so you can store any value later.</td>
+                </tr>
+                <tr>
+                  <td><code>[]</code> (empty list) becomes <code>List&lt;Null&gt;?</code></td>
+                  <td>Becomes <code>List&lt;dynamic&gt;?</code> — usable.</td>
+                </tr>
+                <tr>
+                  <td><code>toJson()</code> always sends <code>null</code> keys to the server</td>
+                  <td>Optional null-check wrapping — empty fields are omitted.</td>
+                </tr>
+                <tr>
+                  <td>If the server sends <code>"12"</code> instead of <code>12</code>, <code>fromJson</code> crashes</td>
+                  <td>Optional <code>ConvertService</code> wraps every parse call so type mismatches never throw.</td>
+                </tr>
+                <tr>
+                  <td>Output is one giant file with all classes mashed together</td>
+                  <td>Output is a clean folder structure — one class per file, organized by nesting depth.</td>
+                </tr>
+                <tr>
+                  <td>No way to manage multiple generations</td>
+                  <td>Built-in <strong>Projects</strong> workspace saves multiple JSON pastes per app.</td>
+                </tr>
+                <tr>
+                  <td>No documentation export</td>
+                  <td>One click exports markdown docs for any model or whole project.</td>
+                </tr>
+                <tr>
+                  <td>JSON must be 100% valid before pasting</td>
+                  <td>Auto-fixes common paste mistakes — trailing commas, missing braces, JS-style comments.</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <!-- ============== QUICK EXAMPLE ============== -->
+            <h2 id="doc-example">Quick example</h2>
+            <p><strong>Paste this JSON:</strong></p>
+            <pre class="docs__code"><code>{
+  "id": 12,
+  "name": "Home",
+  "menu": [
+    {
+      "title": "Profile",
+      "sub_menu": [{ "title": "Account" }]
+    }
+  ],
+  "user": { "id": 1, "name": "Alex", "avatar": null }
+}</code></pre>
+
+            <p><strong>You get this folder structure:</strong></p>
+            <pre class="docs__code"><code>api_home/
+├── api_home_model.dart       (ApiHomeModel)
+├── user_model.dart           (UserModel — flat, no nested objects)
+└── menu/
+    ├── menu_model.dart       (MenuModel — has its own folder, contains sub_menu)
+    └── sub_menu_model.dart   (SubMenuModel)</code></pre>
+
+            <p><strong>And this is what <code>api_home_model.dart</code> contains:</strong></p>
+            <pre class="docs__code"><code>import 'package:my_app/api_home/menu/menu_model.dart';
+import 'package:my_app/api_home/user_model.dart';
+
+class ApiHomeModel {
+  int? id;
+  String? name;
+  List&lt;MenuModel&gt;? menu;
+  UserModel? user;
+
+  ApiHomeModel({this.id, this.name, this.menu, this.user});
+
+  ApiHomeModel.fromJson(Map&lt;String, dynamic&gt; json) {
+    id = json['id'];
+    name = json['name'];
+    if (json['menu'] != null) {
+      menu = &lt;MenuModel&gt;[];
+      json['menu'].forEach((v) {
+        menu!.add(MenuModel.fromJson(v));
+      });
+    }
+    if (json['user'] != null) {
+      user = UserModel.fromJson(json['user']);
+    }
+  }
+
+  Map&lt;String, dynamic&gt; toJson() { /* ... */ }
+}</code></pre>
+
+            <div class="docs__callout">
+              <strong>This is exactly what an experienced Flutter developer would write
+              by hand.</strong> No magical annotations, no codegen step — just plain Dart
+              you can edit.
+            </div>
+
+            <!-- ============== HOW TO USE ============== -->
+            <h2 id="doc-howto">How to use it (step by step)</h2>
+
+            <h3>1. Pick a naming style</h3>
+            <p>The first card on the left asks: <strong>API model</strong> or <strong>Param model</strong>?</p>
+            <ul>
+              <li>
+                <strong>API model</strong> — pick this when the JSON is something you
+                <strong>received</strong> from the server (a response). The root class
+                is named <code>Api&lt;Name&gt;Model</code>.
+              </li>
+              <li>
+                <strong>Param model</strong> — pick this when the JSON is something
+                you'll <strong>send</strong> to the server (a request body). The root
+                class is named <code>Pm&lt;Name&gt;Model</code>.
+              </li>
+            </ul>
+            <p class="hint">
+              This naming is a convention used by Flutter teams to make the role of each
+              class obvious at a glance.
             </p>
 
-            <h3>ConvertService</h3>
+            <h3>2. Type a "root name"</h3>
+            <p>This is the name of the screen, feature, or endpoint the JSON belongs to:</p>
+            <ul>
+              <li>For the home page response → <code>home</code></li>
+              <li>For the login request body → <code>login</code></li>
+              <li>For a list of products → <code>products</code></li>
+            </ul>
             <p>
-              Enable this option for defensive parsing. <code>fromJson</code> calls
-              <code>ConvertService.convertString(...)</code>, <code>.convertInt(...)</code>,
-              etc. instead of trusting raw JSON values. The matching
-              <code>convert_service.dart</code> is bundled into your downloaded ZIP under
-              <code>utils/</code>.
+              The tool combines this with the mode prefix to name the root class and folder.
+              You'll see a live preview right under the input.
+            </p>
+
+            <h3>3. (Optional) Set a "package name"</h3>
+            <p>
+              If you know your Flutter app's package name (the value after <code>name:</code>
+              in <code>pubspec.yaml</code>, like <code>my_app</code>), type it here.
+              The tool will produce <strong>absolute imports</strong>:
+            </p>
+            <pre class="docs__code"><code>import 'package:my_app/api_home/menu/menu_model.dart';</code></pre>
+            <p>If left blank, you get <strong>relative imports</strong>:</p>
+            <pre class="docs__code"><code>import 'menu/menu_model.dart';</code></pre>
+            <p>Both work in Flutter; absolute imports are slightly more readable in big apps.</p>
+
+            <h3>4. Paste your JSON</h3>
+            <p>
+              Big text area in the middle. Copy a real API response (or request body) and
+              paste it. Don't worry about minor formatting issues — the tool auto-fixes
+              most paste mistakes (see <a href="#doc-autofix">JSON auto-fix</a>).
+            </p>
+            <p class="hint">
+              <strong>Tip:</strong> click <em>Load sample</em> to see the tool in action
+              with example JSON.
+            </p>
+
+            <h3>5. Pick options</h3>
+            <p>
+              The right sidebar has checkboxes for helpers and capabilities. Sensible
+              defaults are pre-selected. See
+              <a href="#doc-options">Every option, explained</a> below.
+            </p>
+
+            <h3>6. Click <em>Generate ▸</em></h3>
+            <p>
+              The right pane fills with one tab per generated class. Click any tab to view
+              its content with syntax highlighting.
+            </p>
+
+            <h3>7. Copy or download</h3>
+            <ul>
+              <li><strong>Copy active</strong> — copies the currently visible file to your clipboard.</li>
+              <li><strong>Download .zip</strong> — packages all files (with their folder structure) into a ZIP. If you enabled <code>ConvertService</code>, the helper file is included too.</li>
+              <li><strong>Download convert_service.dart only</strong> — grab just the helper standalone, useful for adding it to an existing project.</li>
+              <li><strong>Download docs</strong> — exports markdown documentation, great for handing context to teammates or AI assistants.</li>
+              <li><strong>Save to Project</strong> — adds these files to a saved project (see <a href="#doc-projects">Projects feature</a>).</li>
+            </ul>
+
+            <!-- ============== EVERY OPTION ============== -->
+            <h2 id="doc-options">Every option, explained</h2>
+
+            <h3>"Use ConvertService in fromJson"</h3>
+            <p><strong>When off</strong> (default), parsing looks like:</p>
+            <pre class="docs__code"><code>id = json['id'];</code></pre>
+            <p>This crashes if the server sends the field as the wrong type
+            (e.g. a string <code>"12"</code> when you expect an int).</p>
+
+            <p><strong>When on</strong>, parsing looks like:</p>
+            <pre class="docs__code"><code>id = ConvertService.convertInt(json['id']);</code></pre>
+            <p>The <code>ConvertService</code> helper coerces values safely. If parsing
+            fails, you get <code>0</code> or <code>""</code> or <code>false</code>
+            instead of an exception.</p>
+
+            <div class="docs__callout">
+              <strong>Recommended for any production app.</strong> A real backend will
+              eventually send unexpected types, and this prevents the entire screen from
+              crashing. When you enable this, the downloaded ZIP automatically includes
+              <code>utils/convert_service.dart</code>.
+            </div>
+
+            <h3>"Wrap each toJson field in a null check"</h3>
+            <p>Without this, every field is sent to the server even if it's <code>null</code>:</p>
+            <pre class="docs__code"><code>data['contract_start_date'] = contractStartDate;  // sends null</code></pre>
+
+            <p>With this enabled:</p>
+            <pre class="docs__code"><code>if (contractStartDate != null) {
+  data['contract_start_date'] = contractStartDate;
+}</code></pre>
+
+            <p>
+              <strong>Auto-enabled when you pick Param mode</strong> — request bodies
+              almost always want this. Some APIs reject <code>null</code> values, and
+              many ignore them but waste bandwidth.
             </p>
 
             <h3>Capabilities</h3>
-            <p>Optional static helpers added to each class:</p>
-            <ul>
-              <li><code>parseItem</code> — parse a single object, never throws.</li>
-              <li>
-                <code>parseItems</code> — handles both raw lists
-                (<code>[{}, {}]</code>) and <code>{ data: [{}, {}] }</code>.
-              </li>
-              <li><code>copyItem</code> / <code>copyItems</code> — deep copy via JSON round-trip.</li>
-              <li><code>toString</code> override — prints <code>name</code>, <code>title</code>, <code>label</code>, or <code>id</code> if present.</li>
-            </ul>
-
-            <h3>Projects</h3>
             <p>
-              Use the <strong>Projects</strong> tab to group models by app.
-              Save each generated set into a project, then download the entire
-              <code>lib/</code> tree at once. Projects live in your browser's
-              localStorage — no server, no signup.
+              These add <strong>static helper methods</strong> inside each generated class.
+              They're optional — turn them on if you find them useful, off if you want
+              minimal output.
             </p>
 
-            <h3>Docs export</h3>
+            <h4 class="docs__h4">parseItem(json)</h4>
+            <p>Parses one object safely:</p>
+            <pre class="docs__code"><code>final user = UserModel.parseItem(apiResponse.data);</code></pre>
+            <p>If the input isn't an object, it returns an empty <code>UserModel()</code>
+            instead of throwing.</p>
+
+            <h4 class="docs__h4">parseItems(json)</h4>
+            <p>Parses a list of objects, handling <strong>two common API shapes</strong>:</p>
+            <pre class="docs__code"><code>// shape 1: raw list
+final list = UserModel.parseItems([{...}, {...}]);
+
+// shape 2: wrapped under "data"
+final list = UserModel.parseItems({ "data": [{...}, {...}] });</code></pre>
+            <p>Both work without you needing to check the shape first.</p>
+
+            <h4 class="docs__h4">copyItem(source) / copyItems(list)</h4>
+            <p>Deep-copies an object (or a list of them). Useful when you want to edit a
+            copy without mutating the original:</p>
+            <pre class="docs__code"><code>final clone = UserModel.copyItem(original);
+clone.name = "New name";  // doesn't affect original</code></pre>
+
+            <h4 class="docs__h4">toString() override</h4>
+            <p>Replaces Dart's default <code>Instance of 'UserModel'</code> with something readable:</p>
+            <pre class="docs__code"><code>print(user); // prints "Alice" instead of "Instance of 'UserModel'"</code></pre>
+            <p>The tool picks the most-likely-friendly field automatically:
+            <code>name</code>, <code>title</code>, <code>label</code>, <code>id</code>,
+            or the first string field.</p>
+
+            <!-- ============== USE CASES ============== -->
+            <h2 id="doc-usecases">Use cases</h2>
+
+            <h3>1. Starting a new Flutter screen</h3>
             <p>
-              Every save remembers the original JSON you pasted. The
-              <strong>Download docs</strong> action emits a markdown bundle: one file per
-              model, listing the fields, types, sample JSON, and the generated Dart.
-              Useful for handing context to teammates or to AI assistants.
+              You got an API contract from the backend team — a sample JSON response.
+              Paste it here, generate the model, drop it into your
+              <code>lib/features/&lt;screen&gt;/models/</code> folder, and start
+              writing UI immediately.
+            </p>
+
+            <h3>2. Building a request body model</h3>
+            <p>
+              You need to call <code>POST /login</code> with
+              <code>{ email, password, device_id }</code>. Paste a sample body, switch
+              to Param mode, generate <code>PmLoginModel</code>. The
+              <code>toJson()</code> is null-safe by default, so optional fields aren't
+              sent when empty.
+            </p>
+
+            <h3>3. Migrating a legacy app</h3>
+            <p>
+              Your app has hand-written models that crash on <code>null</code> fields.
+              Paste a real API response, enable ConvertService, generate, and replace the
+              old model. The new one survives any kind of dirty data.
+            </p>
+
+            <h3>4. Building multiple features at once</h3>
+            <p>
+              Use the <strong>Projects</strong> tab. Create a project for the app you're
+              building. Each time you generate a model, click
+              <strong>Save to Project</strong> with a feature name (e.g. <code>audit</code>,
+              <code>profile</code>). When you're done, hit <strong>Download project ZIP</strong>
+              and you get a ready-to-extract <code>lib/features/...</code> tree.
+            </p>
+
+            <h3>5. Documenting an API for your team</h3>
+            <p>
+              Generate models from each endpoint. Use <strong>Download docs</strong> —
+              you get a markdown bundle showing every field, type, and the original sample
+              JSON. Drop it in your repo wiki or share it with new joiners.
+            </p>
+
+            <h3>6. Feeding context to an AI assistant</h3>
+            <p>
+              The markdown docs are formatted for readability. Paste them into
+              ChatGPT/Claude/Cursor when asking for help with API integration — the
+              assistant gets the full schema in seconds.
+            </p>
+
+            <!-- ============== OUTPUT ============== -->
+            <h2 id="doc-output">What you get out</h2>
+            <p>For a JSON with nested objects and lists, with API mode + all options on,
+            you get something like this:</p>
+            <pre class="docs__code"><code>api_home/
+├── api_home_model.dart       <- root class (ApiHomeModel)
+├── user_model.dart           <- UserModel (no nested objects → flat file)
+└── menu/                     <- menu has nested sub_menu → its own folder
+    ├── menu_model.dart       <- MenuModel
+    └── sub_menu_model.dart   <- SubMenuModel
+utils/
+└── convert_service.dart      <- helper, only if ConvertService option is on</code></pre>
+
+            <h3>The folder rule (simple)</h3>
+            <ul>
+              <li>A class with <strong>no nested objects</strong> lives as a flat file in its parent folder.</li>
+              <li>A class with <strong>nested objects</strong> gets its own subfolder.</li>
+              <li>The root class always gets its own folder named <code>api_&lt;root&gt;</code> or <code>pm_&lt;root&gt;</code>.</li>
+            </ul>
+            <p>This keeps deep models from cluttering one giant folder.</p>
+
+            <h3>Type inference rules</h3>
+            <table class="docs__table">
+              <thead>
+                <tr><th>JSON</th><th>Dart</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>null</code></td><td><code>dynamic</code> (NOT <code>Null?</code>)</td></tr>
+                <tr><td><code>[]</code> or all-null list</td><td><code>List&lt;dynamic&gt;?</code></td></tr>
+                <tr><td>Mixed-type list</td><td><code>List&lt;dynamic&gt;?</code></td></tr>
+                <tr><td><code>[1, 2.0]</code></td><td><code>List&lt;double&gt;?</code> (int+double promote)</td></tr>
+                <tr><td>Whole number</td><td><code>int?</code></td></tr>
+                <tr><td>Fractional number</td><td><code>double?</code></td></tr>
+                <tr><td>String</td><td><code>String?</code></td></tr>
+                <tr><td>Boolean</td><td><code>bool?</code></td></tr>
+                <tr><td>Object</td><td>Generated <code>&lt;Name&gt;Model?</code></td></tr>
+                <tr><td>Array of objects</td><td><code>List&lt;&lt;Name&gt;Model&gt;?</code> (fields merged across all elements)</td></tr>
+              </tbody>
+            </table>
+
+            <!-- ============== AUTO-FIX ============== -->
+            <h2 id="doc-autofix">JSON auto-fix</h2>
+            <p>
+              The tool tries to be forgiving with paste mistakes. The following fixes
+              are applied automatically when you click <strong>Generate</strong> or
+              <strong>Format</strong>:
+            </p>
+
+            <h3>1. Wraps a stray key-value fragment in <code>{ ... }</code></h3>
+            <p>You can paste just an inner property like:</p>
+            <pre class="docs__code"><code>"taskteam_time_record": {
+  "id": 521,
+  "user_id": "22293"
+},</code></pre>
+            <p>The tool wraps it for you:</p>
+            <pre class="docs__code"><code>{
+  "taskteam_time_record": {
+    "id": 521,
+    "user_id": "22293"
+  }
+}</code></pre>
+
+            <h3>2. Wraps multiple objects in <code>[ ... ]</code></h3>
+            <p>If you paste two-or-more comma-separated objects without enclosing brackets,
+            it auto-wraps them as an array.</p>
+
+            <h3>3. Strips trailing commas</h3>
+            <p><code>{ "a": 1, }</code> → <code>{ "a": 1 }</code>. Required by JSON, but
+            JS object literals allow them — easy mistake.</p>
+
+            <h3>4. Strips JS-style comments</h3>
+            <p>Both <code>// line</code> and <code>/* block */</code> comments are removed
+            before parsing. Useful when copying from a JS file or annotated example.</p>
+
+            <p>The status line under the input shows what was fixed, e.g.
+            <em>"auto-fixed: removed trailing comma, wrapped in {{ ... }}"</em>.</p>
+
+            <h3>The Format button</h3>
+            <p>
+              Click the <strong>Format</strong> link in the input toolbar to apply the
+              same auto-fixes and pretty-print the result, without generating. Useful for
+              previewing what the tool will work with.
+            </p>
+
+            <!-- ============== PROJECTS ============== -->
+            <h2 id="doc-projects">Projects feature</h2>
+            <p>The <strong>Projects</strong> tab lets you accumulate multiple generated
+            model sets into one workspace.</p>
+
+            <h3>How it works</h3>
+            <ol>
+              <li>Click <strong>+ New</strong> in the Projects tab.</li>
+              <li>Give it a name (e.g. the name of your Flutter app).</li>
+              <li>Go back to <strong>Generator</strong>, paste JSON, generate.</li>
+              <li>Click <strong>Save to Project</strong> — pick the project, give it a "feature name" (e.g. <code>audit</code>, <code>profile</code>).</li>
+              <li>Repeat for every endpoint.</li>
+            </ol>
+
+            <p>When you're ready, open the project and click
+            <strong>Download project ZIP</strong>. You get this layout:</p>
+            <pre class="docs__code"><code>my-app/
+├── lib/
+│   ├── features/
+│   │   ├── audit/
+│   │   │   └── models/
+│   │   │       ├── api_audit_list/
+│   │   │       └── pm_audit_filter/
+│   │   ├── profile/
+│   │   │   └── models/
+│   │   └── dashboard/
+│   │       └── models/
+│   └── core/
+│       └── utils/
+│           └── convert_service.dart   (only if any saved model uses it)
+└── README.md</code></pre>
+
+            <p>This matches the standard Flutter "feature-first" folder layout.</p>
+
+            <h3>Where projects live</h3>
+            <p>
+              In your browser's <strong>localStorage</strong>. They never leave your
+              device. No server, no signup. If you clear your browser data, projects
+              are gone — so download ZIPs of important work.
+            </p>
+
+            <!-- ============== CONVERTSERVICE ============== -->
+            <h2 id="doc-convertservice">ConvertService helper</h2>
+            <p>
+              The bundled <code>convert_service.dart</code> is a small Dart class with
+              defensive type-conversion helpers. Every method:
+            </p>
+            <ul>
+              <li>Accepts any input type</li>
+              <li>Returns a sensible default (<code>0</code>, <code>""</code>, <code>false</code>, <code>null</code>, <code>[]</code>) on failure</li>
+              <li><strong>Never throws an exception</strong></li>
+            </ul>
+
+            <h3>Available helpers</h3>
+            <table class="docs__table">
+              <thead><tr><th>Method</th><th>Purpose</th></tr></thead>
+              <tbody>
+                <tr><td><code>convertString(data)</code></td><td>Returns string, <code>""</code> on null</td></tr>
+                <tr><td><code>convertStringNullable(data)</code></td><td>Returns string or <code>null</code></td></tr>
+                <tr><td><code>convertInt(data)</code></td><td>Coerces to int, <code>0</code> on failure</td></tr>
+                <tr><td><code>convertIntNullable(data)</code></td><td>Coerces to int or <code>null</code></td></tr>
+                <tr><td><code>convertNum(data)</code></td><td>Coerces to num</td></tr>
+                <tr><td><code>convertDouble(data)</code></td><td>Coerces to double, <code>0</code> on failure</td></tr>
+                <tr><td><code>convertDoubleNullable(data)</code></td><td>Coerces to double or <code>null</code></td></tr>
+                <tr><td><code>convertDoubleRound(data, fractionDigits: 2)</code></td><td>Coerces and rounds</td></tr>
+                <tr><td><code>convertBool(data)</code></td><td>Handles "true"/"1"/"yes"/true</td></tr>
+                <tr><td><code>convertBoolInt(data)</code></td><td>Treats "1" as true (0/1 APIs)</td></tr>
+                <tr><td><code>convertDateTime(data)</code></td><td>Parses ISO date strings</td></tr>
+                <tr><td><code>convertMap(data)</code></td><td>Returns <code>Map&lt;String, dynamic&gt;</code> (parses JSON string if given)</td></tr>
+                <tr><td><code>parseStringList(data)</code></td><td>List of strings</td></tr>
+                <tr><td><code>parseIntList(data)</code></td><td>List of ints (decodes JSON string if given)</td></tr>
+                <tr><td><code>parseDoubleList(data)</code></td><td>List of doubles</td></tr>
+                <tr><td><code>parseNumList(data)</code></td><td>List of nums</td></tr>
+                <tr><td><code>parseBoolList(data)</code></td><td>List of bools</td></tr>
+                <tr><td><code>parseList&lt;T&gt;(data, fromJson)</code></td><td>Generic list of any model class</td></tr>
+              </tbody>
+            </table>
+
+            <h3>Get just the helper file</h3>
+            <p>
+              If you want only <code>convert_service.dart</code> (e.g. to drop into an
+              existing project without changing the rest of your code), click
+              <strong>Download convert_service.dart only</strong> in the sidebar — no JSON
+              input needed.
+            </p>
+
+            <!-- ============== DOCS EXPORT ============== -->
+            <h2 id="doc-docsexport">Docs export</h2>
+            <p>Two flavors of exported documentation:</p>
+
+            <h3>Per-generation docs (Generator → "Download docs")</h3>
+            <p>Bundles markdown files describing the current generation:</p>
+            <ul>
+              <li>A <code>README.md</code> index listing every class</li>
+              <li>One <code>.md</code> per class with field table (name, JSON key, Dart type), the original sample JSON, and the generated Dart for reference</li>
+            </ul>
+
+            <h3>Project docs (Projects → "Download docs")</h3>
+            <p>
+              Same idea, but for every model set saved in the project. Useful for
+              handover, code review, or onboarding.
+            </p>
+
+            <!-- ============== FAQ ============== -->
+            <h2 id="doc-faq">FAQ</h2>
+
+            <h3>Is my JSON sent anywhere?</h3>
+            <p><strong>No.</strong> Everything runs in your browser. There's no backend.
+            You can verify by opening the tool, switching to airplane mode, and confirming
+            generation still works.</p>
+
+            <h3>Can I use this for sensitive / production data?</h3>
+            <p>
+              You can, with the same caveat as any browser tool: pasting real production
+              JSON into a webpage means trusting that webpage's code. Since this tool is
+              open source and runs entirely client-side, you can audit it. For maximum
+              safety, run it locally — see the GitHub README for instructions.
+            </p>
+
+            <h3>Does this generate <code>freezed</code> / <code>json_serializable</code> classes?</h3>
+            <p>No, by design. The output is plain Dart with manual <code>fromJson</code> /
+            <code>toJson</code>. Reasons:</p>
+            <ul>
+              <li>Zero dependencies — works in any Flutter project as-is</li>
+              <li>No build step required</li>
+              <li>Readable — you can edit the generated class without re-running a code generator</li>
+            </ul>
+            <p>If you specifically want <code>freezed</code> /
+            <code>json_serializable</code>, use those packages directly.</p>
+
+            <h3>What if my JSON has a list with mixed types?</h3>
+            <p>
+              Mixed-type lists (e.g. <code>[1, "two", true]</code>) become
+              <code>List&lt;dynamic&gt;?</code>. The tool can't infer a single type when
+              there isn't one. You can refine to a more specific type by editing the
+              generated class.
+            </p>
+
+            <h3>Two of my fields produce the same class name. What happens?</h3>
+            <p>
+              The tool currently produces one shared class for both. Workaround: rename
+              one of the JSON keys before pasting, or rename the generated class manually.
+              Automatic name-collision handling is on the roadmap.
+            </p>
+
+            <h3>Will my saved projects sync across devices?</h3>
+            <p>
+              No — they're stored in your browser's localStorage, which is per-device-per-browser.
+              To move a project, download the project ZIP and re-import on the other device
+              (manual for now).
+            </p>
+
+            <h3>Can I edit a saved model set?</h3>
+            <p>
+              Not yet — saved sets are read-only snapshots. To "edit", regenerate from the
+              source JSON and save again with a new feature name (or delete the old one
+              first).
+            </p>
+
+            <h3>Why two different "Model" suffixes?</h3>
+            <p>
+              The root class always gets a prefix (<code>Api</code> or <code>Pm</code>) so
+              its role is obvious. Nested classes don't need it —
+              <code>MenuModel</code> inside <code>ApiHomeModel</code> is clearly a sub-piece
+              of an API response. This keeps names concise.
+            </p>
+
+            <!-- ============== TROUBLESHOOTING ============== -->
+            <h2 id="doc-troubleshoot">Troubleshooting</h2>
+
+            <h3>"Invalid JSON" but my JSON looks fine</h3>
+            <p>Most common causes (and the auto-fix already handles most):</p>
+            <ul>
+              <li><strong>Missing the outer <code>{ }</code></strong> — auto-fixed.</li>
+              <li><strong>Trailing commas</strong> (<code>{ "a": 1, }</code>) — auto-fixed.</li>
+              <li><strong>Single quotes instead of double quotes</strong> — NOT auto-fixed (too risky, could break strings with apostrophes). Use find-and-replace in your text editor first.</li>
+              <li><strong>Unquoted keys</strong> (<code>{ id: 1 }</code> instead of <code>{ "id": 1 }</code>) — NOT auto-fixed. Use a JSON formatter to clean up.</li>
+            </ul>
+
+            <h3>Generated nothing happens after clicking Generate</h3>
+            <ul>
+              <li>Open the browser console (<code>Cmd/Ctrl + Option + I</code>) and look for red errors.</li>
+              <li>Make sure the input area isn't empty.</li>
+              <li>Try <strong>Load sample</strong> first — if that works, it's something specific to your JSON.</li>
+            </ul>
+
+            <h3>The download didn't start</h3>
+            <p>
+              Some browsers block scripted downloads if you haven't interacted with the
+              page recently. Click anywhere in the page and try the download button again.
+            </p>
+
+            <h3>I lost my projects</h3>
+            <p>
+              Projects live in your browser's localStorage. Common causes of disappearance:
+            </p>
+            <ul>
+              <li>You cleared "Site Data" / "Cookies" for the page.</li>
+              <li>You're using Incognito/Private mode (localStorage is cleared on tab close).</li>
+              <li>Browser settings auto-clear local storage on quit.</li>
+            </ul>
+            <p>
+              <strong>Defence:</strong> download project ZIPs regularly. They're the only
+              durable copy.
             </p>
           </article>
         </div>
