@@ -1,5 +1,5 @@
 // Returns the contents of `convert_service.dart` to bundle alongside generated models.
-// Extended beyond the original maaden helper to cover most common parsing needs.
+// Defensive type-conversion helpers covering the most common JSON parsing needs.
 export function convertServiceDart() {
   return `import 'dart:convert';
 

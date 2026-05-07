@@ -4,7 +4,7 @@ Context for AI assistants working on this project. Read this first.
 
 ## What this is
 
-A static, browser-only tool that converts JSON to Dart model classes. Inspired by https://javiercbk.github.io/json_to_dart/ but tuned for real Flutter codebases — specifically matching the conventions used in the **maaden** project at `/Users/Mahshook.Rahman/Documents/flutter_projects/maaden`.
+A static, browser-only tool that converts JSON to Dart model classes. Inspired by https://javiercbk.github.io/json_to_dart/ but tuned for real-world Flutter codebases — the conventions match how Flutter teams actually write models by hand (named-constructor `fromJson`, nullable fields, defensive parsing, opinionated folder layout).
 
 **Pure static site** — no backend, no build step. Push the folder to GitHub Pages and it runs.
 
@@ -61,7 +61,7 @@ These are the rules the user explicitly requested. They override default `json_t
 | Whole number           | `int?` |
 | Fractional number      | `double?` |
 
-### Class shape (matches maaden style)
+### Class shape
 
 ```dart
 class FooModel {
@@ -104,7 +104,7 @@ Mapping:
 - `String` → `convertString`, `int` → `convertInt`, `double` → `convertDouble`, `num` → `convertNum`, `bool` → `convertBool`
 - `List<String>` → `parseStringList`, `List<int>` → `parseIntList`, `List<double>` → `parseDoubleList`, `List<num>` → `parseNumList`, `List<bool>` → `parseBoolList`
 
-The bundled `convert_service.dart` is **extended** beyond maaden's original — adds nullable variants, `convertDateTime`, `convertMap`, generic `parseList<T>(json, fromJson)`. See `js/convertService.js`.
+The bundled `convert_service.dart` includes nullable variants, `convertDateTime`, `convertMap`, and a generic `parseList<T>(json, fromJson)`. See `js/convertService.js`.
 
 ### Capabilities (each toggleable)
 
@@ -199,10 +199,9 @@ The **Load sample** button in the Generator tab seeds a representative JSON that
 - `Equatable` / `==` / `hashCode` capability.
 - "Compare against existing model" diff view.
 
-## Reference codebase
+## Output style reference
 
-The user wanted output to feel hand-written by their team. Look at `/Users/Mahshook.Rahman/Documents/flutter_projects/maaden/lib/features/audit/models/` for canonical examples:
-- `models/sector_list_model.dart` — simple flat model with `toString` override.
-- `models/task_list_model.dart` — multiple classes per file, nested list parsing.
-- `params/pm_audit_listing_model.dart` — param model with explicit `toJson` map (the original; user wants null-safe wrapping on top of this).
-- `core/utils/convert_service.dart` — the original ConvertService we extended.
+Generated output should feel hand-written, not codegen'd. Concretely that means:
+- Nullable fields, named-constructor `fromJson` (NOT a factory), explicit `forEach` loops for lists of objects.
+- No `json_serializable` / `freezed` annotations — output must compile standalone with zero dependencies (except `dart:convert` if `ConvertService` is bundled).
+- Comments are sparse. The user wants clean files they can drop into existing apps without explaining where each line came from.

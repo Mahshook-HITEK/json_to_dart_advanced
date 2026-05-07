@@ -3,7 +3,7 @@
 // Takes a typed model tree (from parser.js), a naming mode, and an options bag,
 // and produces a list of generated files: { path, content }.
 //
-// Each generated class follows the maaden-style convention:
+// Each generated class follows a hand-written-Flutter convention:
 //   - Nullable fields, snake_case JSON keys.
 //   - `ClassName({this.a, this.b, ...})` default constructor.
 //   - `ClassName.fromJson(Map<String, dynamic> json) { ... }` (NOT a factory).
