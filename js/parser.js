@@ -64,56 +64,67 @@ export function tryParseJson(raw) {
     // continue
   }
 
-  const candidates = [];
-  const fixes = [];
-
-  // Strip line/block comments first — many people paste from JS objects.
-  let stripped = trimmed
+  // Strip line/block comments — many people paste from JS objects.
+  const noCommentsSrc = trimmed
     .replace(/\/\/[^\n\r]*/g, "")
     .replace(/\/\*[\s\S]*?\*\//g, "");
-  if (stripped !== trimmed) fixes.push("removed JS-style comments");
+  const removedComments = noCommentsSrc !== trimmed;
 
-  // Strip trailing commas (`, }` or `, ]`).
-  let noTrailing = stripped.replace(/,(\s*[}\]])/g, "$1");
-  if (noTrailing !== stripped) fixes.push("removed trailing commas");
+  // Strip a trailing comma at end-of-input (e.g. paste ends with `},`).
+  // This is separate from the inside-comma cleanup below.
+  const noTrailingTopLevel = noCommentsSrc.replace(/,\s*$/, "");
+  const removedTopLevelTrailing = noTrailingTopLevel !== noCommentsSrc;
 
-  candidates.push({ src: noTrailing, extraFixes: [] });
+  // The candidate variants we'll try. Each is `cleanup`-ed before parsing so that
+  // any wrapping we add doesn't accidentally produce `,}` patterns.
+  const candidates = [];
+  candidates.push({ src: noTrailingTopLevel, extraFixes: [] });
 
-  // Maybe it's a key-value fragment that needs `{ ... }` wrapping.
-  if (/^"[^"\\]*"\s*:/.test(noTrailing) || /^[A-Za-z_][A-Za-z0-9_]*\s*:/.test(noTrailing)) {
+  // Key-value fragment? Wrap in { ... }.
+  if (
+    /^"[^"\\]*"\s*:/.test(noTrailingTopLevel) ||
+    /^[A-Za-z_][A-Za-z0-9_]*\s*:/.test(noTrailingTopLevel)
+  ) {
     candidates.push({
-      src: `{${noTrailing}}`,
+      src: `{${noTrailingTopLevel}}`,
       extraFixes: ["wrapped in { ... }"],
     });
   }
 
-  // Maybe it's two-or-more comma-separated objects that need `[ ... ]` wrapping.
-  // Heuristic: starts with `{`, ends with `}`, and contains `},` near the top level.
+  // Multiple top-level objects? Wrap in [ ... ].
   if (
-    /^\{[\s\S]*\}$/.test(noTrailing) &&
-    /\}\s*,\s*\{/.test(noTrailing)
+    /^\{[\s\S]*\}$/.test(noTrailingTopLevel) &&
+    /\}\s*,\s*\{/.test(noTrailingTopLevel)
   ) {
     candidates.push({
-      src: `[${noTrailing}]`,
+      src: `[${noTrailingTopLevel}]`,
       extraFixes: ["wrapped in [ ... ]"],
     });
   }
 
   let lastError = null;
   for (const c of candidates) {
+    // Cleanup `,}` and `,]` patterns that may exist or be introduced by wrapping.
+    let attempt = c.src;
+    const cleaned = attempt.replace(/,(\s*[}\]])/g, "$1");
+    const removedInteriorTrailing = cleaned !== attempt;
+    attempt = cleaned;
+
     try {
-      const parsed = JSON.parse(c.src);
-      return {
-        json: parsed,
-        fixedSource: c.src,
-        fixes: [...fixes, ...c.extraFixes],
-      };
+      const parsed = JSON.parse(attempt);
+      const fixes = [];
+      if (removedComments) fixes.push("removed JS-style comments");
+      if (removedTopLevelTrailing) fixes.push("removed trailing comma");
+      if (removedInteriorTrailing && !removedTopLevelTrailing) {
+        fixes.push("removed trailing commas");
+      }
+      fixes.push(...c.extraFixes);
+      return { json: parsed, fixedSource: attempt, fixes };
     } catch (e) {
       lastError = e;
     }
   }
 
-  // All fixes failed — throw the most recent error so the message is informative.
   throw lastError || new SyntaxError("Could not auto-fix JSON");
 }
 
