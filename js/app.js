@@ -1,6 +1,6 @@
 // Main app controller. Wires UI events to parser/generator/projects/downloader/docs.
 
-import { parseJson } from "./parser.js";
+import { parseJson, tryParseJson } from "./parser.js";
 import { generate } from "./generator.js";
 import { triggerDownload, buildGenerationZip } from "./downloader.js";
 import { buildDocs, indexTreeForDocs } from "./docs.js";
@@ -48,10 +48,12 @@ const els = {
   generateBtn: $("#generateBtn"),
   loadSampleBtn: $("#loadSampleBtn"),
   clearInputBtn: $("#clearInputBtn"),
+  formatBtn: $("#formatBtn"),
   copyAllBtn: $("#copyAllBtn"),
   saveToProjectBtn: $("#saveToProjectBtn"),
   downloadDocBtn: $("#downloadDocBtn"),
   downloadZipBtn: $("#downloadZipBtn"),
+  downloadConvertServiceBtn: $("#downloadConvertServiceBtn"),
 
   filesTabs: $("#filesTabs"),
   codeOutputCode: $("#codeOutputCode"),
@@ -160,12 +162,20 @@ function runGenerate() {
     setStatus("Paste some JSON to start.", "muted");
     return;
   }
-  let json;
+  let json, fixedSource, fixes;
   try {
-    json = JSON.parse(raw);
+    ({ json, fixedSource, fixes } = tryParseJson(raw));
   } catch (e) {
     setStatus(`Invalid JSON: ${e.message}`, "error");
     return;
+  }
+  // If auto-fix changed the source, update the textarea so the user sees it.
+  if (fixes.length > 0) {
+    try {
+      els.jsonInput.value = JSON.stringify(json, null, 2);
+    } catch (_) {
+      els.jsonInput.value = fixedSource;
+    }
   }
   const opts = readOptions();
   let tree, files;
@@ -186,11 +196,13 @@ function runGenerate() {
     return;
   }
 
-  lastResult = { tree, files, options: opts, json: raw };
+  lastResult = { tree, files, options: opts, json: els.jsonInput.value };
   activeFileIdx = 0;
   renderFilesTabs();
   renderActiveFile();
-  setStatus(`Generated ${files.length} file${files.length === 1 ? "" : "s"}.`, "success");
+  const fileCount = `Generated ${files.length} file${files.length === 1 ? "" : "s"}`;
+  const fixNote = fixes.length > 0 ? ` · auto-fixed: ${fixes.join(", ")}` : "";
+  setStatus(fileCount + fixNote + ".", "success");
   els.copyAllBtn.disabled = false;
 }
 
@@ -330,6 +342,19 @@ els.clearInputBtn.addEventListener("click", () => {
   setStatus("");
 });
 
+els.formatBtn.addEventListener("click", () => {
+  const raw = els.jsonInput.value.trim();
+  if (!raw) return;
+  try {
+    const { json, fixes } = tryParseJson(raw);
+    els.jsonInput.value = JSON.stringify(json, null, 2);
+    const note = fixes.length > 0 ? ` (auto-fixed: ${fixes.join(", ")})` : "";
+    setStatus(`Formatted${note}.`, "success");
+  } catch (e) {
+    setStatus(`Cannot format: ${e.message}`, "error");
+  }
+});
+
 els.copyAllBtn.addEventListener("click", async () => {
   if (!lastResult) return;
   try {
@@ -356,6 +381,11 @@ els.downloadZipBtn.addEventListener("click", async () => {
     : `pm_${slugify(opts.rootKey)}_models.zip`;
   triggerDownload(name, blob);
   toast("ZIP downloaded", "success");
+});
+
+els.downloadConvertServiceBtn.addEventListener("click", () => {
+  triggerDownload("convert_service.dart", convertServiceDart(), "text/plain");
+  toast("convert_service.dart downloaded", "success");
 });
 
 els.downloadDocBtn.addEventListener("click", async () => {

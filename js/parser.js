@@ -41,6 +41,82 @@
 
 import { toCamelCase, toPascalCase } from "./naming.js";
 
+// Try to parse JSON, applying common auto-fixes if the raw text isn't valid JSON.
+// Returns { json, fixedSource, fixes } where:
+//   - json: the parsed value
+//   - fixedSource: the corrected JSON text (same as input if no fix was needed)
+//   - fixes: array of human-readable strings describing what was changed
+// Throws the original parse error if no fix succeeds.
+//
+// Supported auto-fixes (applied in order):
+//   1. Wrap a stray "key": value fragment in `{ ... }`
+//   2. Wrap multiple comma-separated objects in `[ ... ]`
+//   3. Strip trailing commas before `}` or `]`
+//   4. Strip JS-style line/block comments
+export function tryParseJson(raw) {
+  const trimmed = raw.trim();
+  if (!trimmed) throw new SyntaxError("Empty input");
+
+  // 1) plain parse
+  try {
+    return { json: JSON.parse(trimmed), fixedSource: trimmed, fixes: [] };
+  } catch (originalError) {
+    // continue
+  }
+
+  const candidates = [];
+  const fixes = [];
+
+  // Strip line/block comments first — many people paste from JS objects.
+  let stripped = trimmed
+    .replace(/\/\/[^\n\r]*/g, "")
+    .replace(/\/\*[\s\S]*?\*\//g, "");
+  if (stripped !== trimmed) fixes.push("removed JS-style comments");
+
+  // Strip trailing commas (`, }` or `, ]`).
+  let noTrailing = stripped.replace(/,(\s*[}\]])/g, "$1");
+  if (noTrailing !== stripped) fixes.push("removed trailing commas");
+
+  candidates.push({ src: noTrailing, extraFixes: [] });
+
+  // Maybe it's a key-value fragment that needs `{ ... }` wrapping.
+  if (/^"[^"\\]*"\s*:/.test(noTrailing) || /^[A-Za-z_][A-Za-z0-9_]*\s*:/.test(noTrailing)) {
+    candidates.push({
+      src: `{${noTrailing}}`,
+      extraFixes: ["wrapped in { ... }"],
+    });
+  }
+
+  // Maybe it's two-or-more comma-separated objects that need `[ ... ]` wrapping.
+  // Heuristic: starts with `{`, ends with `}`, and contains `},` near the top level.
+  if (
+    /^\{[\s\S]*\}$/.test(noTrailing) &&
+    /\}\s*,\s*\{/.test(noTrailing)
+  ) {
+    candidates.push({
+      src: `[${noTrailing}]`,
+      extraFixes: ["wrapped in [ ... ]"],
+    });
+  }
+
+  let lastError = null;
+  for (const c of candidates) {
+    try {
+      const parsed = JSON.parse(c.src);
+      return {
+        json: parsed,
+        fixedSource: c.src,
+        fixes: [...fixes, ...c.extraFixes],
+      };
+    } catch (e) {
+      lastError = e;
+    }
+  }
+
+  // All fixes failed — throw the most recent error so the message is informative.
+  throw lastError || new SyntaxError("Could not auto-fix JSON");
+}
+
 export function parseJson(jsonValue, rootKey) {
   if (jsonValue === null || typeof jsonValue !== "object" || Array.isArray(jsonValue)) {
     // If user pasted an array, treat its first object as the model shape.

@@ -161,6 +161,13 @@
               ZIP includes the model folder structure
               and (if enabled) a fresh <code>convert_service.dart</code> in <code>utils/</code>.
             </small>
+            <button class="btn btn--secondary btn--block" id="downloadConvertServiceBtn">
+              Download convert_service.dart only
+            </button>
+            <small class="hint">
+              Grab just the helper file by itself — useful if you only need to
+              add it to an existing project.
+            </small>
           </div>
         </aside>
 
@@ -170,6 +177,7 @@
               <h2>Paste JSON</h2>
               <div class="pane__actions">
                 <button class="link-btn" id="loadSampleBtn">Load sample</button>
+                <button class="link-btn" id="formatBtn" title="Pretty-print and auto-fix">Format</button>
                 <button class="link-btn" id="clearInputBtn">Clear</button>
                 <button class="btn btn--primary" id="generateBtn">Generate ▸</button>
               </div>
@@ -177,7 +185,7 @@
             <textarea
               id="jsonInput"
               spellcheck="false"
-              placeholder='Paste an API response here, e.g.&#10;{&#10;  "id": 1,&#10;  "name": "Home",&#10;  "menu": [{ "title": "Profile" }]&#10;}'
+              placeholder='Paste an API response here, e.g.&#10;{&#10;  "id": 1,&#10;  "name": "Home",&#10;  "menu": [{ "title": "Profile" }]&#10;}&#10;&#10;Tip: incomplete fragments are auto-fixed. You can paste:&#10;  "task": { "id": 521, ... }&#10;and it will wrap it in { } for you.'
             ></textarea>
             <div class="pane__foot" id="parseStatus" aria-live="polite"></div>
           </div>
@@ -209,9 +217,10 @@
             <div class="empty-state">
               <h3>No project selected</h3>
               <p>
-                Create a project (e.g. <em>myFm</em>) and save generated models into it.
-                You can download the entire project — or just one feature — as a structured
-                ZIP, and export markdown docs for everything you've added.
+                Create a project for an app you're building, then save generated
+                models into it. You can download the entire project — or just one
+                feature — as a structured ZIP, and export markdown docs for
+                everything you've added.
               </p>
             </div>
           </div>
@@ -226,7 +235,7 @@
             <p>
               Paste a JSON response or request body, pick a naming convention, and the tool
               produces idiomatic Dart classes that match the conventions used in real Flutter
-              codebases — including the maaden codebase that inspired this project.
+              codebases.
             </p>
 
             <h3>Naming conventions</h3>
@@ -284,10 +293,10 @@
 
             <h3>Projects</h3>
             <p>
-              Use the <strong>Projects</strong> tab to group models by app
-              (<em>myFm</em>, <em>maaden</em>, …). Save each generated set into a project,
-              then download the entire <code>lib/</code> tree at once. Projects live in
-              your browser's localStorage — no server, no signup.
+              Use the <strong>Projects</strong> tab to group models by app.
+              Save each generated set into a project, then download the entire
+              <code>lib/</code> tree at once. Projects live in your browser's
+              localStorage — no server, no signup.
             </p>
 
             <h3>Docs export</h3>
@@ -308,7 +317,7 @@
         <h3>New project</h3>
         <label class="field">
           <span>Project name</span>
-          <input type="text" id="newProjectName" placeholder="e.g. myFm" required />
+          <input type="text" id="newProjectName" placeholder="e.g. my-app" required />
         </label>
         <label class="field">
           <span>Description (optional)</span>
